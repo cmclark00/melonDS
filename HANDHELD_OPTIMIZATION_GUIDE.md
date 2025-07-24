@@ -18,34 +18,61 @@
    ./build_lowmem.sh
    ```
 
+   **Note**: These builds create the core melonDS libraries (`libcore.a`, `libteakra.a`) without the Qt GUI frontend to avoid Qt5/Qt6 dependencies during cross-compilation. This gives you the complete DS emulation engine that you can integrate into your own frontend or existing gaming frontend.
+
 2. **Optimize your system (run as root):**
    ```bash
    sudo ./optimize_handheld.sh
    ```
 
-3. **Copy the optimized config:**
+3. **Build the SDL Frontend:**
+   ```bash
+   ./build_launcher.sh
+   ```
+
+4. **Integration Options:**
+   - **Option A**: Use the provided SDL frontend (recommended for MUOS)
+   - **Option B**: Integrate `libcore.a` into your existing gaming frontend (RetroArch, etc.)
+   - **Option C**: Use the library programmatically in your own application
+
+5. **For MUOS Integration:**
+   ```bash
+   # Copy the SDL frontend to your handheld
+   cp build-launcher/melonDS /path/to/handheld/MUOS/emulator/melonds/
+   cp launch.sh /path/to/handheld/MUOS/emulator/melonds/
+   cp melonDS_muos_launch.sh /path/to/handheld/MUOS/script/
+   
+   # Replace the DraStic launch script with melonDS
+   # Edit your MUOS config to use melonDS_muos_launch.sh for .nds files
+   ```
+
+6. **For testing (if you have a native Qt build):**
    ```bash
    mkdir -p ~/.config/melonDS/
    cp handheld_config.ini ~/.config/melonDS/
    ```
 
-4. **Run melonDS with optimal priority:**
-   ```bash
-   nice -n -10 ./build-handheld/melonDS
-   ```
-
 ## Build Optimizations Explained
 
 ### Standard Handheld Build (`build_handheld.sh`)
+- **Self-contained**: No need to source cross-compilation environment
 - **JIT Enabled**: Uses ARM64 JIT for better performance
 - **OpenGL Disabled**: Saves memory and ensures compatibility
 - **Aggressive Optimization**: `-O3` with ARM64-specific tuning
 - **Link-Time Optimization**: Reduces binary size and improves performance
+- **No Qt Dependency**: Builds core libraries only, avoiding Qt5/Qt6 cross-compilation issues
 
 ### Low Memory Build (`build_lowmem.sh`)
 - **JIT Disabled**: Reduces memory usage at cost of performance
 - **Size Optimization**: `-Os` for smallest possible binary
 - **Function/Data Sections**: Better dead code elimination
+
+### SDL Frontend (`build_launcher.sh`)
+- **Minimal Dependencies**: Only requires SDL2, no Qt5/Qt6
+- **Direct Boot**: Boots straight into games like DraStic
+- **Optimized for Handhelds**: 30 FPS target, efficient rendering
+- **Simple Controls**: Keyboard input mapped to DS buttons
+- **MUOS Compatible**: Drop-in replacement for DraStic
 
 ## Performance Expectations
 
@@ -176,6 +203,29 @@ echo deadline | sudo tee /sys/block/*/queue/scheduler
 - **Large ROMs (> 128MB)**: May cause longer loading times
 - **Huge ROMs (> 256MB)**: Consider using faster storage
 
+## SDL Frontend Controls
+
+### Default Input Mapping
+- **Arrow Keys**: D-Pad (Up, Down, Left, Right)
+- **A Key**: DS A Button
+- **S Key**: DS B Button
+- **Space**: Start Button
+- **Enter**: Select Button
+- **Q Key**: L Shoulder Button
+- **W Key**: R Shoulder Button
+- **X Key**: DS X Button
+- **Z Key**: DS Y Button
+- **ESC**: Exit emulator
+
+### Usage
+```bash
+# Direct ROM launch
+./melonDS /path/to/game.nds
+
+# Using the wrapper script
+./launch.sh /path/to/game.nds
+```
+
 ## Monitoring and Maintenance
 
 ### Use the Performance Monitor
@@ -197,6 +247,15 @@ echo deadline | sudo tee /sys/block/*/queue/scheduler
 
 ## Conclusion
 
-With these optimizations, your 1GB ARM64 handheld should run many DS games at playable framerates. Focus on 2D games and simpler 3D titles for the best experience. The key is finding the right balance between performance and thermal management for your specific device and environment.
+With these optimizations, your 1GB ARM64 handheld should run many DS games at playable framerates. The SDL frontend provides a DraStic-like experience that boots directly into games, making it perfect for MUOS and other handheld operating systems.
+
+### Key Benefits:
+- **No Qt Dependencies**: Builds and runs without complex GUI libraries
+- **Direct Boot**: Launches games immediately like commercial emulators
+- **MUOS Integration**: Drop-in replacement for DraStic
+- **Optimized Performance**: Tuned for 1GB RAM handheld devices
+- **Simple Setup**: Just build and copy files to your device
+
+Focus on 2D games and simpler 3D titles for the best experience. The key is finding the right balance between performance and thermal management for your specific device and environment.
 
 Remember: Every handheld is different, so experiment with settings to find what works best for your specific device and use case!
